@@ -1,72 +1,103 @@
 import React from 'react';
-import { ExternalLink, Eye } from 'lucide-react';
+import { ExternalLink, Eye, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const Projects = () => {
-  const projects = [
-    {
-      id: 1,
-      title: 'هوية بصرية لمطعم راقي',
-      description: 'تصميم هوية بصرية متكاملة لمطعم راقي تشمل الشعار، القوائم، والمواد التسويقية',
-      category: 'الهوية البصرية',
-      image: 'https://via.placeholder.com/400x300/0a1535/d3af35?text=Restaurant+Brand',
-      tags: ['شعار', 'هوية بصرية', 'مطبوعات']
-    },
-    {
-      id: 2,
-      title: 'حملة تسويقية لوسائل التواصل',
-      description: 'تصميم مجموعة من المنشورات الإبداعية لحملة تسويقية على وسائل التواصل الاجتماعي',
-      category: 'وسائل التواصل',
-      image: 'https://via.placeholder.com/400x300/0d46ba/ffffff?text=Social+Media+Campaign',
-      tags: ['انستغرام', 'فيسبوك', 'تسويق رقمي']
-    },
-    {
-      id: 3,
-      title: 'تصميم شعار وهوية تجارية',
-      description: 'إنشاء شعار مميز وهوية بصرية كاملة لشركة تقنية ناشئة',
-      category: 'الهوية البصرية',
-      image: 'https://via.placeholder.com/400x300/d3af35/0a1535?text=Tech+Logo+Design',
-      tags: ['شعار', 'هوية تجارية', 'تقنية']
-    },
-    {
-      id: 4,
-      title: 'منشورات إبداعية لمتجر أزياء',
-      description: 'سلسلة من المنشورات الإبداعية والجذابة لعرض مجموعة أزياء جديدة',
-      category: 'وسائل التواصل',
-      image: 'https://via.placeholder.com/400x300/0a1535/d3af35?text=Fashion+Posts',
-      tags: ['أزياء', 'تصوير المنتجات', 'تصميم إعلاني']
-    },
-    {
-      id: 5,
-      title: 'تصميم كتالوج منتجات',
-      description: 'تصميم كتالوج أنيق وجذاب لعرض مجموعة منتجات شركة تجميل',
-      category: 'مطبوعات',
-      image: 'https://via.placeholder.com/400x300/0d46ba/ffffff?text=Product+Catalog',
-      tags: ['كتالوج', 'تجميل', 'مطبوعات']
-    },
-    {
-      id: 6,
-      title: 'هوية بصرية لمقهى عصري',
-      description: 'تطوير هوية بصرية شاملة لمقهى عصري تشمل التصميم الداخلي والخارجي',
-      category: 'الهوية البصرية',
-      image: 'https://via.placeholder.com/400x300/d3af35/0a1535?text=Cafe+Branding',
-      tags: ['مقهى', 'تصميم داخلي', 'علامة تجارية']
-    }
-  ];
-
-  const categories = ['الكل', 'الهوية البصرية', 'وسائل التواصل', 'مطبوعات'];
+  const [projects, setProjects] = React.useState([]);
+  const [filteredProjects, setFilteredProjects] = React.useState([]);
+  const [categories, setCategories] = React.useState(['الكل']);
   const [activeCategory, setActiveCategory] = React.useState('الكل');
-  const [filteredProjects, setFilteredProjects] = React.useState(projects);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+
+  // Fetch all projects
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API}/projects`);
+      setProjects(response.data);
+      setFilteredProjects(response.data);
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      setError('حدث خطأ في تحميل المشاريع');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch categories
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(`${API}/categories`);
+      setCategories(response.data.categories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  // Fetch projects by category
+  const fetchProjectsByCategory = async (category) => {
+    try {
+      setLoading(true);
+      const url = category === 'الكل' 
+        ? `${API}/projects` 
+        : `${API}/projects?category=${encodeURIComponent(category)}`;
+      const response = await axios.get(url);
+      setFilteredProjects(response.data);
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching projects by category:', error);
+      setError('حدث خطأ في تحميل المشاريع');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   React.useEffect(() => {
-    if (activeCategory === 'الكل') {
-      setFilteredProjects(projects);
-    } else {
-      setFilteredProjects(projects.filter(project => project.category === activeCategory));
+    fetchProjects();
+    fetchCategories();
+  }, []);
+
+  React.useEffect(() => {
+    if (activeCategory) {
+      fetchProjectsByCategory(activeCategory);
     }
   }, [activeCategory]);
+
+  if (loading && projects.length === 0) {
+    return (
+      <section id="projects" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-[#0d46ba]" />
+            <p className="mt-4 text-gray-600">جاري تحميل المشاريع...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="projects" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={fetchProjects} className="bg-[#0d46ba] text-white">
+              إعادة المحاولة
+            </Button>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="projects" className="py-20 bg-white">
@@ -88,6 +119,7 @@ const Projects = () => {
               key={category}
               variant={activeCategory === category ? "default" : "outline"}
               onClick={() => setActiveCategory(category)}
+              disabled={loading}
               className={`px-6 py-2 transition-all duration-300 ${
                 activeCategory === category
                   ? 'bg-[#0d46ba] text-white hover:bg-[#0a3d9f]'
@@ -98,6 +130,13 @@ const Projects = () => {
             </Button>
           ))}
         </div>
+
+        {/* Loading State for Category Change */}
+        {loading && projects.length > 0 && (
+          <div className="text-center mb-8">
+            <Loader2 className="h-6 w-6 animate-spin mx-auto text-[#0d46ba]" />
+          </div>
+        )}
 
         {/* Projects Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -126,6 +165,7 @@ const Projects = () => {
                   <Badge variant="secondary" className="bg-[#d3af35] text-[#0a1535] hover:bg-[#c49d2f]">
                     {project.category}
                   </Badge>
+                  <span className="text-sm text-gray-500">{project.year}</span>
                 </div>
                 <CardTitle className="text-xl font-bold text-[#0a1535] group-hover:text-[#0d46ba] transition-colors duration-300">
                   {project.title}
@@ -136,21 +176,42 @@ const Projects = () => {
                 <p className="text-gray-600 mb-4 leading-relaxed">
                   {project.description}
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mb-3">
                   {project.tags.map((tag, index) => (
                     <Badge key={index} variant="outline" className="text-xs border-[#0d46ba] text-[#0d46ba]">
                       {tag}
                     </Badge>
                   ))}
                 </div>
+                <div className="text-sm text-gray-500">
+                  <span className="font-semibold">العميل:</span> {project.client}
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
+        {filteredProjects.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <p className="text-gray-600 text-lg">لا توجد مشاريع في هذة الفئة حالياً</p>
+          </div>
+        )}
+
         <div className="text-center mt-12">
-          <Button size="lg" className="bg-gradient-to-r from-[#d3af35] to-[#0d46ba] hover:from-[#c49d2f] hover:to-[#0a3d9f] text-white px-8 py-3 text-lg transition-all duration-300">
-            عرض المزيد من الأعمال
+          <Button 
+            size="lg" 
+            className="bg-gradient-to-r from-[#d3af35] to-[#0d46ba] hover:from-[#c49d2f] hover:to-[#0a3d9f] text-white px-8 py-3 text-lg transition-all duration-300"
+            onClick={fetchProjects}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin ml-2" />
+                جاري التحديث...
+              </>
+            ) : (
+              'تحديث المشاريع'
+            )}
           </Button>
         </div>
       </div>
