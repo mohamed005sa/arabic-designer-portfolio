@@ -1,10 +1,14 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Instagram, Twitter, Linkedin, Facebook, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Instagram, Twitter, Linkedin, Facebook, Send, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { useToast } from '../hooks/use-toast';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const Contact = () => {
   const { toast } = useToast();
@@ -14,24 +18,26 @@ const Contact = () => {
     subject: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [siteConfig, setSiteConfig] = React.useState(null);
 
   const contactInfo = [
     {
       icon: <Mail className="h-6 w-6" />,
       title: 'البريد الإلكتروني',
-      value: 'designer@example.com',
-      link: 'mailto:designer@example.com'
+      value: siteConfig?.email || 'designer@example.com',
+      link: `mailto:${siteConfig?.email || 'designer@example.com'}`
     },
     {
       icon: <Phone className="h-6 w-6" />,
       title: 'رقم الهاتف',
-      value: '+966 50 123 4567',
-      link: 'tel:+966501234567'
+      value: siteConfig?.phone || '+966 50 123 4567',
+      link: `tel:${siteConfig?.phone || '+966501234567'}`
     },
     {
       icon: <MapPin className="h-6 w-6" />,
       title: 'الموقع',
-      value: 'الرياض، المملكة العربية السعودية',
+      value: siteConfig?.location || 'الرياض، المملكة العربية السعودية',
       link: null
     }
   ];
@@ -40,28 +46,42 @@ const Contact = () => {
     {
       icon: <Instagram className="h-6 w-6" />,
       name: 'Instagram',
-      url: 'https://instagram.com/designer',
+      url: siteConfig?.social_links?.instagram || 'https://instagram.com/designer',
       color: 'hover:text-pink-500'
     },
     {
       icon: <Twitter className="h-6 w-6" />,
       name: 'Twitter',
-      url: 'https://twitter.com/designer',
+      url: siteConfig?.social_links?.twitter || 'https://twitter.com/designer',
       color: 'hover:text-blue-400'
     },
     {
       icon: <Linkedin className="h-6 w-6" />,
       name: 'LinkedIn',
-      url: 'https://linkedin.com/in/designer',
+      url: siteConfig?.social_links?.linkedin || 'https://linkedin.com/in/designer',
       color: 'hover:text-blue-600'
     },
     {
       icon: <Facebook className="h-6 w-6" />,
       name: 'Facebook',
-      url: 'https://facebook.com/designer',
+      url: siteConfig?.social_links?.facebook || 'https://facebook.com/designer',
       color: 'hover:text-blue-500'
     }
   ];
+
+  // Fetch site configuration
+  const fetchSiteConfig = async () => {
+    try {
+      const response = await axios.get(`${API}/config`);
+      setSiteConfig(response.data);
+    } catch (error) {
+      console.error('Error fetching site config:', error);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchSiteConfig();
+  }, []);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -70,20 +90,34 @@ const Contact = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Mock form submission
-    toast({
-      title: "تم إرسال الرسالة بنجاح!",
-      description: "شكراً لك على التواصل معنا. سنقوم بالرد عليك في أقرب وقت ممكن.",
-    });
+    setIsSubmitting(true);
     
-    setFormData({
-      name: '',
-      email: '',
-      subject: '',
-      message: ''
-    });
+    try {
+      const response = await axios.post(`${API}/contact`, formData);
+      
+      toast({
+        title: "تم إرسال الرسالة بنجاح!",
+        description: response.data.message || "شكراً لك على التواصل معنا. سنقوم بالرد عليك في أقرب وقت ممكن.",
+      });
+      
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      toast({
+        title: "حدث خطأ",
+        description: error.response?.data?.detail || "لم يتم إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -185,6 +219,7 @@ const Contact = () => {
                       onChange={handleInputChange}
                       placeholder="أدخل اسمك الكامل"
                       required
+                      disabled={isSubmitting}
                       className="border-gray-300 focus:border-[#0d46ba] focus:ring-[#0d46ba]"
                     />
                   </div>
@@ -199,6 +234,7 @@ const Contact = () => {
                       onChange={handleInputChange}
                       placeholder="أدخل بريدك الإلكتروني"
                       required
+                      disabled={isSubmitting}
                       className="border-gray-300 focus:border-[#0d46ba] focus:ring-[#0d46ba]"
                     />
                   </div>
@@ -215,6 +251,7 @@ const Contact = () => {
                     onChange={handleInputChange}
                     placeholder="أدخل موضوع الرسالة"
                     required
+                    disabled={isSubmitting}
                     className="border-gray-300 focus:border-[#0d46ba] focus:ring-[#0d46ba]"
                   />
                 </div>
@@ -230,6 +267,7 @@ const Contact = () => {
                     placeholder="اكتب رسالتك هنا..."
                     rows={5}
                     required
+                    disabled={isSubmitting}
                     className="border-gray-300 focus:border-[#0d46ba] focus:ring-[#0d46ba]"
                   />
                 </div>
@@ -237,9 +275,19 @@ const Contact = () => {
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full bg-gradient-to-r from-[#d3af35] to-[#0d46ba] hover:from-[#c49d2f] hover:to-[#0a3d9f] text-white font-semibold py-3 transition-all duration-300 transform hover:scale-105"
+                  disabled={isSubmitting}
+                  className="w-full bg-gradient-to-r from-[#d3af35] to-[#0d46ba] hover:from-[#c49d2f] hover:to-[#0a3d9f] text-white font-semibold py-3 transition-all duration-300 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  إرسال الرسالة <Send className="mr-2 h-5 w-5" />
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      جاري الإرسال...
+                    </>
+                  ) : (
+                    <>
+                      إرسال الرسالة <Send className="mr-2 h-5 w-5" />
+                    </>
+                  )}
                 </Button>
               </form>
             </CardContent>
