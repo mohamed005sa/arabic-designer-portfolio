@@ -28,8 +28,8 @@ const About = () => {
             </h3>
             
             <p className="text-lg text-gray-700 leading-relaxed">
-              أنا مصمم جرافيك محترف بخبرة تزيد عن 5 سنوات في مجال التصميم الجرافيكي والهوية البصرية. 
-              أتخصص في إنشاء تصاميم إبداعية ومبتكرة لوسائل التواصل الاجتماعي والعلامات التجارية.
+             ،مصمم جرافيك مبدع بخبرة تزيد عن 5 سنوات، متخصص في تصميم محتوى بصري جذاب يعزز الهوية الرقمية بأسلوب إبداعي واحترافي. أجيد استخدام أدوات الذكاء الاصطناعــي
+لصنع تأثير بصري مميز. 
             </p>
             
             <p className="text-lg text-gray-700 leading-relaxed">
@@ -42,7 +42,7 @@ const About = () => {
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-[#d3af35] rounded-full ml-3"></div>
-                  أكثر من 200 مشروع تصميم ناجح
+                  أكثر من 100 مشروع تصميم ناجح
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-[#d3af35] rounded-full ml-3"></div>
@@ -50,7 +50,7 @@ const About = () => {
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-[#d3af35] rounded-full ml-3"></div>
-                  متخصص في تصميم وسائل التواصل الاجتماعي
+                  متخصص في تصميم منشورات وسائل التواصل الاجتماعي
                 </li>
               </ul>
             </div>
